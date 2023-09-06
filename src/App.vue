@@ -1,17 +1,8 @@
 <template>
   <div>
-    <h2 class="text-xl">Make sounds:</h2>
-    <div class="flex flex-col">
-      <button 
-        v-for="waveType in Object.values(WaveType)" 
-        :key="waveType" 
-        @click="playSound(waveType)" 
-      >
-        {{ waveType }}
-      </button>
-    </div>
+    <h2 class="text-xl">Sound Maker</h2>
     <div>
-      <h2 class="text-xl">Notes:</h2>
+      <h2 class="text-lg">Notes:</h2>
       <div class="flex flex-wrap">
         <div
           v-for="note in noteSequence"
@@ -50,12 +41,12 @@
             <input
               :name="prop"
               :value="note.wave[prop]"
-              @input="note[prop] = Number(($event?.target as HTMLInputElement)?.value || 0)"
+              @input="note.wave[prop] = Number(($event?.target as HTMLInputElement)?.value || 0)"
               type="number"
             >
           </div>
           <button
-            @click="playSound(note.wave.type, note.wave.freq, note.duration)"
+            @click="playNote(note as Note)"
             class="bg-green-500 m-2 p-2"
           >
             Play
@@ -146,11 +137,6 @@ class Note {
   get endTime(): number {
     return this._endTime;
   }
-
-  set endTime(value: number) {
-    this._endTime = value;
-    this._duration = this._endTime - this._startTime;
-  }
 }
 
 type Wave = {
@@ -171,14 +157,14 @@ enum WaveType {
 const WAVES_GENERATORS : {
   [key in WaveType]: WaveGenerator
 } = {
-  [WaveType.SINE]: (freq: number, sampleRate: number, i: number) => Math.sin(2 * Math.PI * freq * i / sampleRate),
-  [WaveType.SQUARE]: (freq: number, sampleRate: number, i: number) => Math.sign(Math.sin(2 * Math.PI * freq * i / sampleRate)),
-  [WaveType.SAWTOOTH]: (freq: number, sampleRate: number, i: number) => 2 * (i / sampleRate * freq - Math.floor(0.5 + i / sampleRate * freq)),
-  [WaveType.TRIANGLE]: (freq: number, sampleRate: number, i: number) => Math.abs(2 * (i / sampleRate * freq - Math.floor(0.5 + i / sampleRate * freq))) - 1,
+  [WaveType.SINE]: (freq: number, t: number, ph0: number) => Math.sin(2 * Math.PI * freq * t + ph0),
+  [WaveType.SQUARE]: (freq: number, t: number, ph0: number) => Math.sign(Math.sin(2 * Math.PI * freq * t + ph0)),
+  [WaveType.SAWTOOTH]: (freq: number, t: number, ph0: number) => 2 * (t * freq + ph0 - Math.floor(0.5 + t * freq + ph0)),
+  [WaveType.TRIANGLE]: (freq: number, t: number, ph0: number) => Math.abs(2 * (t * freq + ph0 - Math.floor(0.5 + t * freq + ph0))) - 1,
   [WaveType.WHITE_NOISE]: () => Math.random() * 2 - 1,
 }
 
-type WaveGenerator = (freq: number, sampleRate: number, i: number) => number
+type WaveGenerator = (freq: number, t: number, ph0: number) => number
 
 const noteSequence = ref<Note[]>([])
 
@@ -203,25 +189,24 @@ noteSequence.value.push(new Note(2.5, 1, {
   amplitude: 0.3,
 }))
 
-function generateWave(type: WaveType, freq: number, duration: number, sampleRate: number) {
+function generateNote(note: Note, sampleRate: number) {
+  return generateWave(note.wave, note.duration, sampleRate)
+}
+
+function generateWave(wave: Wave, duration: number, sampleRate: number) {
+  const type = wave.type
+  const freq = wave.freq
+
   const buffer = new Float32Array(duration * sampleRate)
   for (let i = 0; i < buffer.length; i++) {
-    buffer[i] = WAVES_GENERATORS[type](freq, sampleRate, i)
+    buffer[i] = WAVES_GENERATORS[type](freq, i / sampleRate, 0) * wave.amplitude
   }
   return buffer
 }
 
-function playSound(type: WaveType, freq: number = 440, duration: number = 1) {
-  const audioBuffer = generateWave(type, freq, duration, SAMPLE_RATE)
-
-  const audioCtx = new window.AudioContext()
-  const source = audioCtx.createBufferSource()
-  const audioData = audioCtx.createBuffer(1, audioBuffer.length, SAMPLE_RATE)
-  audioData.copyToChannel(audioBuffer, 0)
-
-  source.buffer = audioData
-  source.connect(audioCtx.destination)
-  source.start()
+function playNote(note: Note) {
+  const audioBuffer = generateWave(note.wave, note.duration, SAMPLE_RATE)
+  playBuffer(audioBuffer)
 }
 
 function playSequence() {
@@ -230,19 +215,25 @@ function playSequence() {
     return
   }
 
-  const audioCtx = new window.AudioContext()
-  const audioData = audioCtx.createBuffer(1, Math.max(...noteSequence.value.map(note => note.endTime)) * SAMPLE_RATE, SAMPLE_RATE)
-  const audioBuffer = audioData.getChannelData(0)
-
-  noteSequence.value.forEach(note => {
-    const noteBuffer = generateWave(note.wave.type, note.wave.freq, note.duration, SAMPLE_RATE)
-    const startPos_in_audioBuffer = note.startTime * SAMPLE_RATE
-    for (let j = 0; j < noteBuffer.length; j++) {
-      audioBuffer[startPos_in_audioBuffer + j] = note.wave.amplitude * noteBuffer[j] + (audioBuffer[startPos_in_audioBuffer + j] || 0)
+  const audioBuffer = noteSequence.value.reduce((acc, note) => {
+    const noteBuffer = generateNote(note as Note, SAMPLE_RATE)
+    const offset = note.startTime * SAMPLE_RATE
+    // combine buffers
+    for (let i = 0; i < noteBuffer.length; i++) {
+      acc[i + offset] += noteBuffer[i]
     }
-  })
+    return acc
+  }, new Float32Array(Math.max(...noteSequence.value.map(note => note.endTime)) * SAMPLE_RATE))
 
+  playBuffer(audioBuffer)
+}
+
+function playBuffer(buffer: Float32Array) {
+  const audioCtx = new window.AudioContext()
   const source = audioCtx.createBufferSource()
+  const audioData = audioCtx.createBuffer(1, buffer.length, SAMPLE_RATE)
+  audioData.copyToChannel(buffer, 0)
+
   source.buffer = audioData
   source.connect(audioCtx.destination)
   source.start()
