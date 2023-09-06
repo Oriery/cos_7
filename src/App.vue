@@ -94,18 +94,18 @@ class Note {
   private _endTime: number;
   wave: Wave;
 
-  [key: string]: number | Wave | string;
+  [key: string]: any;
 
-  constructor(startTime: number = 0, duration: number = 1, wave: Wave = {
-    amplitude: 0.5,
-    type: WaveType.SINE,
-    freq: 220,
-  }) {
+  constructor(startTime: number = 0, duration: number = 1, wave = new Wave()) {
     this._id = String(Math.random());
     this._startTime = startTime;
     this._duration = duration;
     this._endTime = startTime + duration;
     this.wave = wave;
+  }
+
+  toBytes(this: Note, sampleRate: number): Float32Array {
+    return this.wave.toBytes(sampleRate, this.duration)
   }
 
   get id(): string {
@@ -139,11 +139,32 @@ class Note {
   }
 }
 
-type Wave = {
-  amplitude: number
-  type: WaveType
-  freq: number
-  [key: string]: number | string | WaveType
+class Wave {
+  amplitude: number;
+  type: WaveType;
+  freq: number;
+  ph0: number;
+  [key: string]: any;
+
+  constructor(
+    type: WaveType = WaveType.SINE,
+    amplitude: number = 0.5,
+    freq: number = 220,
+    ph0: number = 0,
+  ) {
+    this.amplitude = amplitude;
+    this.type = type;
+    this.freq = freq;
+    this.ph0 = ph0;
+  }
+
+  toBytes(this: Wave, sampleRate: number, duration: number): Float32Array {
+    const buffer = new Float32Array(sampleRate * duration);
+    for (let i = 0; i < buffer.length; i++) {
+      buffer[i] = WAVES_GENERATORS[this.type as WaveType](this.freq, i / sampleRate, this.ph0) * this.amplitude;
+    }
+    return buffer;
+  }
 }
 
 enum WaveType {
@@ -168,45 +189,29 @@ type WaveGenerator = (freq: number, t: number, ph0: number) => number
 
 const noteSequence = ref<Note[]>([])
 
-noteSequence.value.push(new Note(0, 2, {
-  type: WaveType.SINE,
-  freq: 220,
-  amplitude: 0.5,
-}))
-noteSequence.value.push(new Note(0.5, 1, {
-  type: WaveType.SAWTOOTH,
-  freq: 110,
-  amplitude: 0.3,
-}))
-noteSequence.value.push(new Note(1.5, 1, {
-  type: WaveType.SAWTOOTH,
-  freq: 130,
-  amplitude: 0.3,
-}))
-noteSequence.value.push(new Note(2.5, 1, {
-  type: WaveType.SAWTOOTH,
-  freq: 98,
-  amplitude: 0.3,
-}))
-
-function generateNote(note: Note, sampleRate: number) {
-  return generateWave(note.wave, note.duration, sampleRate)
-}
-
-function generateWave(wave: Wave, duration: number, sampleRate: number) {
-  const type = wave.type
-  const freq = wave.freq
-
-  const buffer = new Float32Array(duration * sampleRate)
-  for (let i = 0; i < buffer.length; i++) {
-    buffer[i] = WAVES_GENERATORS[type](freq, i / sampleRate, 0) * wave.amplitude
-  }
-  return buffer
-}
+noteSequence.value.push(new Note(0, 2, new Wave(
+  WaveType.SINE,
+  0.5,
+  220,
+)))
+noteSequence.value.push(new Note(0.5, 1, new Wave(
+  WaveType.SAWTOOTH,
+  0.3,
+  110,
+)))
+noteSequence.value.push(new Note(1.5, 1, new Wave(
+  WaveType.SAWTOOTH,
+  0.3,
+  130,
+)))
+noteSequence.value.push(new Note(2.5, 1, new Wave(
+  WaveType.SAWTOOTH,
+  0.3,
+  98,
+)))
 
 function playNote(note: Note) {
-  const audioBuffer = generateWave(note.wave, note.duration, SAMPLE_RATE)
-  playBuffer(audioBuffer)
+  playBuffer(note.toBytes(SAMPLE_RATE))
 }
 
 function playSequence() {
@@ -216,7 +221,7 @@ function playSequence() {
   }
 
   const audioBuffer = noteSequence.value.reduce((acc, note) => {
-    const noteBuffer = generateNote(note as Note, SAMPLE_RATE)
+    const noteBuffer = (note as Note).toBytes(SAMPLE_RATE)
     const offset = note.startTime * SAMPLE_RATE
     // combine buffers
     for (let i = 0; i < noteBuffer.length; i++) {
