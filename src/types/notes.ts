@@ -1,7 +1,6 @@
 const SAMPLE_RATE = 44100
 
 export class Note {
-  private _id: string;
   private _startTime: number;
   private _duration: number;
   private _endTime: number;
@@ -10,7 +9,6 @@ export class Note {
   [key: string]: any;
 
   constructor(startTime: number = 0, duration: number = 1, wave = new Wave()) {
-    this._id = String(Math.random());
     this._startTime = startTime;
     this._duration = duration;
     this._endTime = startTime + duration;
@@ -19,6 +17,10 @@ export class Note {
 
   toBytes(this: Note, sampleRate: number): Float32Array {
     return this.wave.toBytes(sampleRate, this.duration)
+  }
+
+  copy(this: Note) : Note {
+    return new Note(this.startTime, this.duration, this.wave.copy())
   }
 
   get id(): string {
@@ -57,6 +59,7 @@ export class Wave {
   type: WaveType;
   freq: number;
   ph0: number;
+  fullness: number; // 0 - 1 – For square wave
   [key: string]: any;
 
   constructor(
@@ -64,19 +67,31 @@ export class Wave {
     amplitude: number = 0.5,
     freq: number = 220,
     ph0: number = 0,
+    fullness?: number,
   ) {
     this.amplitude = amplitude;
     this.type = type;
     this.freq = freq;
     this.ph0 = ph0;
+    this.fullness = fullness || 0.5;
   }
 
   toBytes(this: Wave, sampleRate: number, duration: number): Float32Array {
+    this.validateFullness();
+
     const buffer = new Float32Array(sampleRate * duration);
     for (let i = 0; i < buffer.length; i++) {
-      buffer[i] = WAVES_GENERATORS[this.type as WaveType](this.freq, i / sampleRate, this.ph0) * this.amplitude;
+      buffer[i] = WAVES_GENERATORS[this.type as WaveType](this.freq, i / sampleRate, this.ph0, this.fullness) * this.amplitude;
     }
     return buffer;
+  }
+
+  validateFullness(this: Wave) : boolean {
+    return this.fullness >= 0 && this.fullness <= 1;
+  }
+
+  copy(this: Wave) : Wave {
+    return new Wave(this.type, this.amplitude, this.freq, this.ph0, this.fullness)
   }
 }
 
@@ -92,13 +107,13 @@ export const WAVES_GENERATORS : {
   [key in WaveType]: WaveGenerator
 } = {
   [WaveType.SINE]: (freq: number, t: number, ph0: number) => Math.sin(2 * Math.PI * freq * t + ph0),
-  [WaveType.SQUARE]: (freq: number, t: number, ph0: number) => Math.sign(Math.sin(2 * Math.PI * freq * t + ph0)),
+  [WaveType.SQUARE]: (freq: number, t: number, ph0: number, fullness?: number) => Math.sign(Math.sin(2 * Math.PI * freq * t + ph0) + 2 * (fullness || 0.5) - 1),
   [WaveType.SAWTOOTH]: (freq: number, t: number, ph0: number) => 2 * (t * freq + ph0 - Math.floor(0.5 + t * freq + ph0)),
   [WaveType.TRIANGLE]: (freq: number, t: number, ph0: number) => Math.abs(2 * (t * freq + ph0 - Math.floor(0.5 + t * freq + ph0))) - 1,
   [WaveType.WHITE_NOISE]: () => Math.random() * 2 - 1,
 }
 
-export type WaveGenerator = (freq: number, t: number, ph0: number) => number
+export type WaveGenerator = (freq: number, t: number, ph0: number, fullness?: number) => number
 
 export function playNote(note: Note) {
   playBuffer(note.toBytes(SAMPLE_RATE))

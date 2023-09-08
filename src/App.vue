@@ -9,6 +9,7 @@
           :key="note.id"
           :note="(note as Note)"
           @delete-note="noteSequence.splice(noteSequence.indexOf(note), 1)"
+          @duplicate-note="noteSequence.splice(noteSequence.indexOf(note), 0, (note as Note).copy())"
         />
       </div>
       <button 
@@ -29,6 +30,12 @@
       >
         Play Sequence
       </button>
+      <button 
+        @click="resetNoteSequence"
+        class="bg-blue-500 m-2 p-2"
+      >
+        Reset To Default
+      </button>
     </div>
   </div>
 </template>
@@ -41,25 +48,30 @@ import { Note, Wave, WaveType, playSequence, NoteSequence } from './types/notes'
 
 const noteSequence = ref<NoteSequence>([])
 
-noteSequence.value.push(new Note(0, 2, new Wave(
-  WaveType.SINE,
-  0.5,
-  220,
-)))
-noteSequence.value.push(new Note(0.5, 1, new Wave(
-  WaveType.SAWTOOTH,
-  0.3,
-  110,
-)))
-noteSequence.value.push(new Note(1.5, 1, new Wave(
-  WaveType.SAWTOOTH,
-  0.3,
-  130,
-)))
-noteSequence.value.push(new Note(2.5, 1, new Wave(
-  WaveType.SAWTOOTH,
-  0.3,
-  98,
-)))
+resetNoteSequence()
+
+function resetNoteSequence() {
+  noteSequence.value = []
+  noteSequence.value.push(new Note(0, 2, new Wave(
+    WaveType.SINE,
+    0.5,
+    220,
+  )))
+  noteSequence.value.push(new Note(0.5, 1, new Wave(
+    WaveType.SAWTOOTH,
+    0.3,
+    110,
+  )))
+  noteSequence.value.push(new Note(1.5, 1, new Wave(
+    WaveType.SAWTOOTH,
+    0.3,
+    130,
+  )))
+  noteSequence.value.push(new Note(2.5, 1, new Wave(
+    WaveType.SAWTOOTH,
+    0.3,
+    98,
+  )))
+}
 
 </script>

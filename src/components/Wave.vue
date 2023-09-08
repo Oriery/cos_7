@@ -15,7 +15,7 @@
       </option>
     </select>
     <div
-      v-for="prop in Object.keys(wave).filter(prop => typeof wave[prop] === 'number')"
+      v-for="prop in Object.keys(wave).filter(prop => typeof wave[prop] === 'number' && (wave.type !== WaveType.WHITE_NOISE || prop === 'amplitude') && (wave.type === WaveType.SQUARE || prop !== 'fullness'))"
       :key="prop"
       class="flex flex-col m-1"
     >
