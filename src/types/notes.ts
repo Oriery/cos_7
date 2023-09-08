@@ -1,6 +1,7 @@
 const SAMPLE_RATE = 44100
 
 export class Note {
+  private _id: string;
   private _startTime: number;
   private _duration: number;
   private _endTime: number;
@@ -9,6 +10,7 @@ export class Note {
   [key: string]: any;
 
   constructor(startTime: number = 0, duration: number = 1, wave = new Wave()) {
+    this._id = Math.random().toString(36).slice(2);
     this._startTime = startTime;
     this._duration = duration;
     this._endTime = startTime + duration;
@@ -55,11 +57,14 @@ export class Note {
 }
 
 export class Wave {
+  id: string;
   amplitude: number;
+  amplitudeMod?: Wave;
   type: WaveType;
   freq: number;
   ph0: number;
   fullness: number; // 0 - 1 – For square wave
+  center: number; // where "zero" of the wave is
   [key: string]: any;
 
   constructor(
@@ -67,13 +72,18 @@ export class Wave {
     amplitude: number = 0.5,
     freq: number = 220,
     ph0: number = 0,
+    center: number = 0,
     fullness?: number,
+    amplitudeMod?: Wave,
   ) {
+    this.id = Math.random().toString(36).slice(2);
     this.amplitude = amplitude;
     this.type = type;
     this.freq = freq;
     this.ph0 = ph0;
+    this.center = center;
     this.fullness = fullness || 0.5;
+    this.amplitudeMod = amplitudeMod;
   }
 
   toBytes(this: Wave, sampleRate: number, duration: number): Float32Array {
@@ -81,7 +91,14 @@ export class Wave {
 
     const buffer = new Float32Array(sampleRate * duration);
     for (let i = 0; i < buffer.length; i++) {
-      buffer[i] = WAVES_GENERATORS[this.type as WaveType](this.freq, i / sampleRate, this.ph0, this.fullness) * this.amplitude;
+      buffer[i] = WAVES_GENERATORS[this.type as WaveType](this.freq, i / sampleRate, this.ph0, this.fullness) * this.amplitude + this.center;
+    }
+
+    const amplitudeModBuffer = this.amplitudeMod?.toBytes(sampleRate, duration);
+    if (amplitudeModBuffer) {
+      for (let i = 0; i < buffer.length; i++) {
+        buffer[i] *= amplitudeModBuffer[i];
+      }
     }
     return buffer;
   }
@@ -91,7 +108,7 @@ export class Wave {
   }
 
   copy(this: Wave) : Wave {
-    return new Wave(this.type, this.amplitude, this.freq, this.ph0, this.fullness)
+    return new Wave(this.type, this.amplitude, this.freq, this.ph0, this.center, this.fullness, this.amplitudeMod?.copy())
   }
 }
 

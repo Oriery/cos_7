@@ -9,7 +9,7 @@
           :key="note.id"
           :note="(note as Note)"
           @delete-note="noteSequence.splice(noteSequence.indexOf(note), 1)"
-          @duplicate-note="noteSequence.splice(noteSequence.indexOf(note), 0, (note as Note).copy())"
+          @duplicate-note="duplicateNote"
         />
       </div>
       <button 
@@ -72,6 +72,10 @@ function resetNoteSequence() {
     0.3,
     98,
   )))
+}
+
+function duplicateNote (note: Note) {
+  noteSequence.value.splice(noteSequence.value.indexOf(note), 0, note.copy())
 }
 
 </script>

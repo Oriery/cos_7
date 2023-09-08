@@ -3,16 +3,16 @@
     class="border-2 rounded-lg m-1 flex flex-col justify-between"
   >
     <WaveComponent :wave="note.wave"/>
-    <div class="mt-2 border-t-2 border-gray-500">
+    <div class="mt-1 border-t-2 border-gray-700">
       <div>
         <div 
           v-for="prop in Object.keys(note).map(prop => prop.startsWith('_') ? prop.slice(1) : prop).filter((prop) => prop !== 'id' && prop !== 'endTime' && typeof note[prop] === 'number')"
           :key="prop"
           class="flex flex-col m-1"
         >
-          <label :for="prop">{{ prop }}</label>
+          <label :for="prop + note.id">{{ prop }}</label>
           <input
-            :name="prop"
+            :id="prop + note.id"
             :value="note[prop]"
             @input="note[prop] = Number(($event?.target as HTMLInputElement)?.value || 0)"
             type="number"
