@@ -10,7 +10,7 @@
           :key="prop"
           class="flex flex-col m-1"
         >
-          <label :for="prop + note.id">{{ prop }}</label>
+          <label :for="prop + note.id">{{ namesOfPropsOfNote[prop] }}</label>
           <input
             :id="prop + note.id"
             :value="note[prop]"
@@ -53,5 +53,10 @@ defineProps<{
 }>()
 
 defineEmits(['delete-note', 'duplicate-note'])
+
+const namesOfPropsOfNote : {[key : string]: string} = {
+  'startTime': 'Start Time',
+  'duration': 'Duration',
+}
 
 </script>

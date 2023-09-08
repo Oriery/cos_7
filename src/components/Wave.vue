@@ -1,23 +1,27 @@
 <template>
   <div>
-    <select
-      v-model="wave.type"
-      class="m-1"
-    >
-      <option
-        v-for="waveType in Object.values(WaveType)"
-        :key="waveType"
-        :value="waveType"
+    <div class="flex flex-col m-1">
+      <label :for="'note' + wave.id">{{ namesOfPropsOfWave['type'] }}</label>
+      <select
+        v-model="wave.type"
+        class="m-1"
+        :id="'type' + wave.id"
       >
-        {{ waveType }}
-      </option>
-    </select>
+        <option
+          v-for="waveType in Object.values(WaveType)"
+          :key="waveType"
+          :value="waveType"
+        >
+          {{ namesOfTypesOfWave[waveType] }}
+        </option>
+      </select>
+    </div>
     <div
       v-for="prop in Object.keys(wave).filter(prop => typeof wave[prop] === 'number' && (wave.type !== WaveType.WHITE_NOISE || prop === 'amplitude') && (wave.type === WaveType.SQUARE || prop !== 'fullness'))"
       :key="prop"
       class="flex flex-col m-1"
     >
-      <label :for="prop + wave.id">{{ prop }}</label>
+      <label :for="prop + wave.id">{{ namesOfPropsOfWave[prop] }}</label>
       <input
         :id="prop + wave.id"
         :value="wave[prop]"
@@ -26,7 +30,7 @@
       >
     </div>
     <div class="flex justify-between m-1 mx-2 gap-x-2">
-      <label :for="'amp-mod' + wave.id">Amplitude Modulation</label>
+      <label :for="'amp-mod' + wave.id">{{ namesOfPropsOfWave['amplitudeMod'] }}</label>
       <input
         :id="'amp-mod' + wave.id"
         type="checkbox"
@@ -65,5 +69,23 @@ watch(amplitudeModIsOn, (newVal) => {
     amplitudeMod.value = undefined
   }
 })
+
+const namesOfPropsOfWave : {[key : string]: string} = {
+  type: 'Wave Shape',
+  amplitude: 'Amplitude',
+  freq: 'Frequency',
+  ph0: 'Phase',
+  fullness: 'Fullness',
+  center: 'Center',
+  amplitudeMod: 'Amplitude Modulation',
+}
+
+const namesOfTypesOfWave : {[key : string]: string} = {
+  [WaveType.SINE]: 'Sine',
+  [WaveType.SQUARE]: 'Square',
+  [WaveType.TRIANGLE]: 'Triangle',
+  [WaveType.SAWTOOTH]: 'Sawtooth',
+  [WaveType.WHITE_NOISE]: 'White Noise',
+}
 
 </script>
