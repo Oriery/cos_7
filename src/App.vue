@@ -56,21 +56,47 @@ function resetNoteSequence() {
     WaveType.SINE,
     0.5,
     220,
+    undefined,
+    0.5,
+    undefined,
+    new Wave(
+      WaveType.SINE,
+      0.5,
+      20,
+      -0.5,
+      0.5,
+      undefined,
+      new Wave(
+        WaveType.SINE,
+        0.5,
+        4,
+        -0.5,
+        0.5,
+      )
+    )
   )))
-  noteSequence.value.push(new Note(0.5, 1, new Wave(
-    WaveType.SAWTOOTH,
-    0.3,
+  noteSequence.value.push(new Note(1, 2, new Wave(
+    WaveType.SQUARE,
+    0.1,
     110,
-  )))
-  noteSequence.value.push(new Note(1.5, 1, new Wave(
-    WaveType.SAWTOOTH,
-    0.3,
-    130,
-  )))
-  noteSequence.value.push(new Note(2.5, 1, new Wave(
-    WaveType.SAWTOOTH,
-    0.3,
-    98,
+    undefined,
+    0.5,
+    undefined,
+    new Wave(
+      WaveType.SINE,
+      0.5,
+      20,
+      -0.5,
+      0.5,
+      undefined,
+      new Wave(
+        WaveType.SINE,
+        0.5,
+        2,
+        -0.5,
+        0.5,
+      )
+    )
   )))
 }
 
