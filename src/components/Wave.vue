@@ -74,7 +74,7 @@ const namesOfPropsOfWave : {[key : string]: string} = {
   type: 'Wave Shape',
   amplitude: 'Amplitude',
   freq: 'Frequency',
-  ph0: 'Phase',
+  ph0: 'Start Phase',
   fullness: 'Fullness',
   center: 'Center',
   amplitudeMod: 'Amplitude Modulation',

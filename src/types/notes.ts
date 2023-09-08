@@ -123,10 +123,10 @@ export enum WaveType {
 export const WAVES_GENERATORS : {
   [key in WaveType]: WaveGenerator
 } = {
-  [WaveType.SINE]: (freq: number, t: number, ph0: number) => Math.sin(2 * Math.PI * freq * t + ph0 * Math.PI),
-  [WaveType.SQUARE]: (freq: number, t: number, ph0: number, fullness?: number) => Math.sign(Math.sin(2 * Math.PI * freq * t + ph0 * Math.PI) + 2 * (fullness || 0.5) - 1),
-  [WaveType.SAWTOOTH]: (freq: number, t: number, ph0: number) => 2 * (t * freq + ph0 * Math.PI - Math.floor(0.5 + t * freq + ph0 * Math.PI)),
-  [WaveType.TRIANGLE]: (freq: number, t: number, ph0: number) => Math.abs(2 * (t * freq + ph0 * Math.PI - Math.floor(0.5 + t * freq + ph0 * Math.PI))) - 1,
+  [WaveType.SINE]: (freq: number, t: number, ph0: number) => Math.sin((2 * freq * t + ph0) * Math.PI),
+  [WaveType.SQUARE]: (freq: number, t: number, ph0: number, fullness?: number) => {fullness = fullness || 0.5; return Math.sign(Math.sin((2 * freq * t - fullness + ph0 + 0.5) * Math.PI) - Math.cos(fullness * Math.PI))},
+  [WaveType.SAWTOOTH]: (freq: number, t: number, ph0: number) => 2 * (t * freq + 0.5 * ph0 - Math.floor(0.5 + t * freq + 0.5 * ph0)),
+  [WaveType.TRIANGLE]: (freq: number, t: number, ph0: number) => Math.abs(2 * (0.25 + t * freq + 0.5 * ph0 - Math.floor(0.75 + t * freq + 0.5 * ph0))) - 1,
   [WaveType.WHITE_NOISE]: () => Math.random() * 2 - 1,
 }
 
