@@ -8,14 +8,15 @@
         <div 
           v-for="prop in Object.keys(note).map(prop => prop.startsWith('_') ? prop.slice(1) : prop).filter((prop) => prop !== 'id' && prop !== 'endTime' && typeof note[prop] === 'number')"
           :key="prop"
-          class="flex flex-col m-1"
+          class="flex flex-col m-1 mx-2"
         >
-          <label :for="prop + note.id">{{ namesOfPropsOfNote[prop] }}</label>
+          <label :for="prop + note.id" class="grow text-start">{{ namesOfPropsOfNote[prop] }}</label>
           <input
             :id="prop + note.id"
             :value="note[prop]"
             @input="note[prop] = Number(($event?.target as HTMLInputElement)?.value || 0)"
             type="number"
+            class="px-2"
           >
         </div>
       </div>

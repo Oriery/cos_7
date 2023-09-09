@@ -3,7 +3,7 @@
     <h2 class="text-xl">Sound Maker</h2>
     <div>
       <h2 class="text-lg">Notes:</h2>
-      <div class="flex flex-wrap">
+      <div class="flex flex-wrap justify-center">
         <NoteComponent 
           v-for="note in noteSequence"
           :key="note.id"
@@ -13,7 +13,7 @@
         />
       </div>
       <button 
-        @click="() => noteSequence.push(new Note())"
+        @click="createNote"
         class="bg-gray-500 m-2 p-2"
       >
         Create Note
@@ -54,10 +54,10 @@ function resetNoteSequence() {
   noteSequence.value = []
   noteSequence.value.push(new Note(0, 2, new Wave(
     WaveType.SINE,
-    0.5,
+    1,
     220,
     undefined,
-    0.5,
+    undefined,
     undefined,
     new Wave(
       WaveType.SINE,
@@ -80,28 +80,32 @@ function resetNoteSequence() {
     0.1,
     110,
     undefined,
-    0.5,
+    undefined,
     undefined,
     new Wave(
-      WaveType.SINE,
+      WaveType.SQUARE,
       0.5,
-      20,
-      -0.5,
+      8,
+      0,
       0.5,
-      undefined,
-      new Wave(
-        WaveType.SINE,
-        0.5,
-        2,
-        -0.5,
-        0.5,
-      )
+    ),
+    new Wave(
+      WaveType.SAWTOOTH,
+      77.78,
+      4,
+      1,
+      220,
     )
   )))
 }
 
-function duplicateNote (note: Note) {
+function duplicateNote(note: Note) {
   noteSequence.value.splice(noteSequence.value.indexOf(note), 0, note.copy())
+}
+
+function createNote() {
+  console.log('create note')
+  noteSequence.value.push(new Note())
 }
 
 </script>

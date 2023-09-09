@@ -17,7 +17,7 @@ export class Note {
     this.wave = wave;
   }
 
-  toBytes(this: Note, sampleRate: number): Float32Array {
+  toBytes(this: Note, sampleRate: number): Float64Array {
     return this.wave.toBytes(sampleRate, this.duration)
   }
 
@@ -62,6 +62,7 @@ export class Wave {
   amplitudeMod?: Wave;
   type: WaveType;
   freq: number;
+  freqMod?: Wave;
   ph0: number;
   fullness: number; // 0 - 1 – For square wave
   center: number; // where "zero" of the wave is
@@ -73,8 +74,9 @@ export class Wave {
     freq: number = 220,
     ph0: number = 0,
     center: number = 0,
-    fullness?: number,
+    fullness: number = 0.5,
     amplitudeMod?: Wave,
+    freqMod?: Wave,
   ) {
     this.id = Math.random().toString(36).slice(2);
     this.amplitude = amplitude;
@@ -82,16 +84,29 @@ export class Wave {
     this.freq = freq;
     this.ph0 = ph0;
     this.center = center;
-    this.fullness = fullness || 0.5;
+    this.fullness = fullness;
     this.amplitudeMod = amplitudeMod;
+    this.freqMod = freqMod;
   }
 
-  toBytes(this: Wave, sampleRate: number, duration: number): Float32Array {
+  toBytes(this: Wave, sampleRate: number, duration: number): Float64Array {
     this.validateFullness();
 
-    const buffer = new Float32Array(sampleRate * duration);
-    for (let i = 0; i < buffer.length; i++) {
-      buffer[i] = WAVES_GENERATORS[this.type as WaveType](this.freq, i / sampleRate, this.ph0, this.fullness) * this.amplitude + this.center;
+    const buffer = new Float64Array(sampleRate * duration);
+    const dt = 1 / sampleRate;
+    if (!this.freqMod) {
+      const dPh = this.freq * dt;
+      for (let i = 0; i < buffer.length; i++) {
+        buffer[i] = WAVES_GENERATORS[this.type as WaveType](dPh * i , this.ph0, this.fullness) * this.amplitude + this.center;
+      }
+    } else {
+      const freqModBuffer = this.freqMod.toBytes(sampleRate, duration);
+      let phPrev = this.ph0;
+      for (let i = 0; i < buffer.length; i++) {
+        const dPh = freqModBuffer[i] * dt;
+        buffer[i] = WAVES_GENERATORS[this.type as WaveType](dPh, phPrev, this.fullness) * this.amplitude + this.center;
+        phPrev = phPrev + 2 * dPh;
+      }
     }
 
     const amplitudeModBuffer = this.amplitudeMod?.toBytes(sampleRate, duration);
@@ -123,14 +138,14 @@ export enum WaveType {
 export const WAVES_GENERATORS : {
   [key in WaveType]: WaveGenerator
 } = {
-  [WaveType.SINE]: (freq: number, t: number, ph0: number) => Math.sin((2 * freq * t + ph0) * Math.PI),
-  [WaveType.SQUARE]: (freq: number, t: number, ph0: number, fullness?: number) => {fullness = fullness || 0.5; return Math.sign(Math.sin((2 * freq * t - fullness + ph0 + 0.5) * Math.PI) - Math.cos(fullness * Math.PI))},
-  [WaveType.SAWTOOTH]: (freq: number, t: number, ph0: number) => 2 * (t * freq + 0.5 * ph0 - Math.floor(0.5 + t * freq + 0.5 * ph0)),
-  [WaveType.TRIANGLE]: (freq: number, t: number, ph0: number) => Math.abs(2 * (0.25 + t * freq + 0.5 * ph0 - Math.floor(0.75 + t * freq + 0.5 * ph0))) - 1,
+  [WaveType.SINE]: (dPh: number, ph0: number) => Math.sin((2 * dPh + ph0) * Math.PI),
+  [WaveType.SQUARE]: (dPh: number, ph0: number, fullness?: number) => {fullness = fullness || 0.5; return Math.sign(Math.sin((2 * dPh - fullness + ph0 + 0.5) * Math.PI) - Math.cos(fullness * Math.PI))},
+  [WaveType.SAWTOOTH]: (dPh: number, ph0: number) => 2 * (dPh + 0.5 * ph0 - Math.floor(0.5 + dPh + 0.5 * ph0)),
+  [WaveType.TRIANGLE]: (dPh: number, ph0: number) => Math.abs(2 * (0.25 + dPh + 0.5 * ph0 - Math.floor(0.75 + dPh + 0.5 * ph0))) - 1,
   [WaveType.WHITE_NOISE]: () => Math.random() * 2 - 1,
 }
 
-export type WaveGenerator = (freq: number, t: number, ph0: number, fullness?: number) => number
+export type WaveGenerator = (dPh: number, ph0: number, fullness?: number) => number
 
 export function playNote(note: Note) {
   playBuffer(note.toBytes(SAMPLE_RATE))
@@ -152,16 +167,16 @@ export function playSequence(noteSequence : NoteSequence) {
       acc[i + offset] += noteBuffer[i]
     }
     return acc
-  }, new Float32Array(Math.max(...noteSequence.map(note => note.endTime)) * SAMPLE_RATE))
+  }, new Float64Array(Math.max(...noteSequence.map(note => note.endTime)) * SAMPLE_RATE))
 
   playBuffer(audioBuffer)
 }
 
-export function playBuffer(buffer: Float32Array) {
+export function playBuffer(buffer: Float64Array) {
   const audioCtx = new window.AudioContext()
   const source = audioCtx.createBufferSource()
   const audioData = audioCtx.createBuffer(1, buffer.length, SAMPLE_RATE)
-  audioData.copyToChannel(buffer, 0)
+  audioData.copyToChannel(new Float32Array(buffer), 0)
 
   source.buffer = audioData
   source.connect(audioCtx.destination)
