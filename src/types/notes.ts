@@ -141,7 +141,7 @@ export const WAVES_GENERATORS : {
   [WaveType.SINE]: (dPh: number, ph0: number) => Math.sin((2 * dPh + ph0) * Math.PI),
   [WaveType.SQUARE]: (dPh: number, ph0: number, fullness?: number) => {fullness = fullness || 0.5; return Math.sign(Math.sin((2 * dPh - fullness + ph0 + 0.5) * Math.PI) - Math.cos(fullness * Math.PI))},
   [WaveType.SAWTOOTH]: (dPh: number, ph0: number) => 2 * (dPh + 0.5 * ph0 - Math.floor(0.5 + dPh + 0.5 * ph0)),
-  [WaveType.TRIANGLE]: (dPh: number, ph0: number) => Math.abs(2 * (0.25 + dPh + 0.5 * ph0 - Math.floor(0.75 + dPh + 0.5 * ph0))) - 1,
+  [WaveType.TRIANGLE]: (dPh: number, ph0: number) => Math.abs(1 + 4 * dPh + 2 * ph0 - 4 * Math.floor(0.75 + dPh + 0.5 * ph0)) - 1,
   [WaveType.WHITE_NOISE]: () => Math.random() * 2 - 1,
 }
 

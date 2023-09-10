@@ -21,7 +21,7 @@ def sawtooth_wave(dPh, ph0):
     return 2 * (dPh + 0.5 * ph0 - np.floor(0.5 + dPh + 0.5 * ph0))
 
 def triangle_wave(dPh, ph0):
-    return np.abs(2 * (0.25 + dPh + 0.5 * ph0 - np.floor(0.75 + dPh + 0.5 * ph0))) - 1
+    return np.abs(1 + 4 * dPh + 2 * ph0 - 4 * np.floor(0.75 + dPh + 0.5 * ph0)) - 1
 
 # Calculate the waveforms
 sine_waveform = sine_wave(dPh, ph0)
