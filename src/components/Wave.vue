@@ -63,31 +63,26 @@
         :prepend-icon="propsOfWave[prop].icon"
       ></v-text-field>
     </div>
-    <div :class="freqMod && amplitudeMod ? 'flex flex-row' : ''">
+    <div :class="'mt-2 ' + (freqMod && amplitudeMod ? 'flex flex-row' : '')">
       <div>
-        <div class="flex justify-between m-1 mx-2 gap-x-2">
-          <label :for="'amp-mod' + wave.id" class="grow text-start">{{ propsOfWave['amplitudeMod'].name }}</label>
-          <input
-            :id="'amp-mod' + wave.id"
-            type="checkbox"
-            v-model="amplitudeModIsOn"
-            class="px-2"
-          >
-        </div>
+        <v-switch
+          v-model="amplitudeModIsOn"
+          hide-details
+          :label="propsOfWave['amplitudeMod'].name"
+          class="mx-2 my-n4"
+        ></v-switch>
         <WaveComponent v-if="amplitudeModIsOn" :wave="amplitudeMod!" class="border-2 rounded-lg m-1"/>
       </div>
       <div>
-        <div class="flex justify-between m-1 mx-2 gap-x-2">
-          <label :for="'freq-mod' + wave.id" class="grow text-start">{{ propsOfWave['freqMod'].name }}</label>
-          <input
-            :id="'freq-mod' + wave.id"
-            type="checkbox"
-            v-model="freqModIsOn"
-            class="px-2"
-          >
-        </div>
+        <v-switch
+          v-model="freqModIsOn"
+          hide-details
+          :label="propsOfWave['freqMod'].name"
+          class="mx-2 my-n4"
+        ></v-switch>
         <WaveComponent v-if="freqModIsOn" :wave="freqMod!" class="border-2 rounded-lg m-1"/>
       </div>
+      <div v-if="!freqModIsOn" class="h-2"></div>
     </div>
   </div>
 </template>
