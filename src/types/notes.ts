@@ -1,7 +1,9 @@
 import { ref } from 'vue'
 
 const DEFAULT_SAMPLE_RATE = 44100
+const DEFAULT_BITS_PER_SAMPLE = 64
 export const sampleRate = ref(DEFAULT_SAMPLE_RATE)
+export const bitsPerSample = ref(DEFAULT_BITS_PER_SAMPLE)
 
 export class Note {
   id: string;
@@ -156,6 +158,10 @@ export function playBuffer(buffer: Float64Array) {
     bufferUsed = newBuffer
   }
 
+  if (bitsPerSample.value < Float64Array.BYTES_PER_ELEMENT * 8) {
+    bufferUsed =  convertToBitDepth(bufferUsed, bitsPerSample.value)
+  }
+
   const audioCtx = new window.AudioContext()
   const source = audioCtx.createBufferSource()
   const audioData = audioCtx.createBuffer(1, bufferUsed.length, sampleRateUsed)
@@ -184,4 +190,24 @@ function convertIntoAtLeast8000SamplesPerSecond(buffer: Float64Array, sampleRate
     newSampleRate: sampleRate * multiplier,
     newBuffer
   }
+}
+
+function convertToBitDepth(buffer: Float64Array, bits: number, useDithering: boolean = true): Float64Array {
+  const maxValue = Math.pow(2, bits - 1);
+  const newBuffer = new Float64Array(buffer.length);
+  
+  for (let i = 0; i < buffer.length; i++) {
+      let sample = buffer[i];
+
+      // Apply dithering
+      if (useDithering) {
+          const dither = (Math.random() - 0.5) / (maxValue * 2);
+          sample += dither;
+      }
+
+      // Quantize and then normalize to float between -1 and 1
+      sample = Math.round(sample * (maxValue - 1)) / (maxValue - 1);
+      newBuffer[i] = Math.max(-1, Math.min(1, sample));
+  }
+  return newBuffer;
 }
