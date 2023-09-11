@@ -36,6 +36,17 @@
       >
         Reset To Default
       </button>
+      <div class="flex flex-row align-center">
+        Sample rate
+        <v-text-field
+          v-model="sampleRate"
+          hide-details
+          single-line
+          density="compact"
+          type="number"
+          :prepend-icon="'mdi:signal'"
+        ></v-text-field>
+      </div>
     </div>
   </div>
 </template>
@@ -44,7 +55,7 @@
 
 import { ref } from 'vue'
 import NoteComponent from './components/Note.vue'
-import { Note, Wave, WaveType, playSequence, NoteSequence } from './types/notes'
+import { Note, Wave, WaveType, playSequence, NoteSequence, sampleRate } from './types/notes'
 
 const noteSequence = ref<NoteSequence>([])
 

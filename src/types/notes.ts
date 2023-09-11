@@ -1,4 +1,7 @@
-const SAMPLE_RATE = 44100
+import { ref } from 'vue'
+
+const DEFAULT_SAMPLE_RATE = 44100
+export const sampleRate = ref(DEFAULT_SAMPLE_RATE)
 
 export class Note {
   id: string;
@@ -120,7 +123,7 @@ export const WAVES_GENERATORS : {
 export type WaveGenerator = (dPh: number, ph0: number, fullness?: number) => number
 
 export function playNote(note: Note) {
-  playBuffer(note.toBytes(SAMPLE_RATE))
+  playBuffer(note.toBytes(sampleRate.value))
 }
 
 export type NoteSequence = Note[]
@@ -132,25 +135,53 @@ export function playSequence(noteSequence : NoteSequence) {
   }
 
   const audioBuffer = noteSequence.reduce((acc, note) => {
-    const noteBuffer = (note as Note).toBytes(SAMPLE_RATE)
-    const offset = note.startTime * SAMPLE_RATE
+    const noteBuffer = (note as Note).toBytes(sampleRate.value)
+    const offset = note.startTime * sampleRate.value
     // combine buffers
     for (let i = 0; i < noteBuffer.length; i++) {
       acc[i + offset] += noteBuffer[i]
     }
     return acc
-  }, new Float64Array(Math.max(...noteSequence.map(note => note.endTime)) * SAMPLE_RATE))
+  }, new Float64Array(Math.max(...noteSequence.map(note => note.endTime)) * sampleRate.value))
 
   playBuffer(audioBuffer)
 }
 
 export function playBuffer(buffer: Float64Array) {
+  let sampleRateUsed = sampleRate.value
+  let bufferUsed = buffer
+  if (sampleRate.value < 8000) {
+    let { newBuffer, newSampleRate } = convertIntoAtLeast8000SamplesPerSecond(buffer, sampleRate.value)
+    sampleRateUsed = newSampleRate
+    bufferUsed = newBuffer
+  }
+
   const audioCtx = new window.AudioContext()
   const source = audioCtx.createBufferSource()
-  const audioData = audioCtx.createBuffer(1, buffer.length, SAMPLE_RATE)
-  audioData.copyToChannel(new Float32Array(buffer), 0)
+  const audioData = audioCtx.createBuffer(1, bufferUsed.length, sampleRateUsed)
+  audioData.copyToChannel(new Float32Array(bufferUsed), 0)
 
   source.buffer = audioData
   source.connect(audioCtx.destination)
   source.start()
+}
+
+// because audioCtx.createBuffer can only create buffers with sample rate of more than 8000
+function convertIntoAtLeast8000SamplesPerSecond(buffer: Float64Array, sampleRate: number) : {
+  newSampleRate: number,
+  newBuffer: Float64Array
+} {
+  if (sampleRate >= 8000) throw new Error('Sample rate is already more than 8000')
+
+  const multiplier = Math.ceil(8000 / sampleRate)
+  const newBuffer = new Float64Array(buffer.length * multiplier)
+  for (let i = 0; i < buffer.length; i++) {
+    for (let j = 0; j < multiplier; j++) {
+      newBuffer[i * multiplier + j] = buffer[i]
+    }
+  }
+  return {
+    newSampleRate: sampleRate * multiplier,
+    newBuffer
+  }
 }
