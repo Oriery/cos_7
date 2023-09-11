@@ -1,20 +1,24 @@
 <template>
   <div>
     <div class="flex flex-col m-1 min-w-[15rem]">
-      <label :for="'note' + wave.id">{{ propsOfWave['type'].name }}</label>
-      <select
-        v-model="wave.type"
-        class="m-1"
-        :id="'type' + wave.id"
-      >
-        <option
-          v-for="waveType in Object.values(WaveType)"
-          :key="waveType"
-          :value="waveType"
-        >
-          {{ namesOfTypesOfWave[waveType] }}
-        </option>
-      </select>
+      <p class="text-start mx-1">{{ propsOfWave['type'].name }}</p>
+      <v-btn-toggle v-model="wave.type">
+        <v-btn value='sine'>
+          <v-icon>mdi-sine-wave</v-icon>
+        </v-btn>
+        <v-btn value="square">
+          <v-icon>mdi-square-wave</v-icon>
+        </v-btn>
+        <v-btn value="triangle">
+          <v-icon>mdi-triangle-wave</v-icon>
+        </v-btn>
+        <v-btn value="sawtooth">
+          <v-icon>mdi-sawtooth-wave</v-icon>
+        </v-btn>
+        <v-btn value="white-noise">
+          <v-icon>mdi-waveform</v-icon>
+        </v-btn>
+      </v-btn-toggle>
     </div>
     <div
       v-for="prop in Object.keys(wave).filter(prop => typeof wave[prop] === 'number' && (wave.type !== WaveType.WHITE_NOISE || prop === 'amplitude') && (wave.type === WaveType.SQUARE || prop !== 'fullness') && (prop !== 'freq' || !freqModIsOn))"
