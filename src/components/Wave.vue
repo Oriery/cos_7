@@ -1,7 +1,7 @@
 <template>
   <div>
-    <div class="flex flex-col m-1">
-      <label :for="'note' + wave.id">{{ namesOfPropsOfWave['type'] }}</label>
+    <div class="flex flex-col m-1 min-w-[15rem]">
+      <label :for="'note' + wave.id">{{ propsOfWave['type'].name }}</label>
       <select
         v-model="wave.type"
         class="m-1"
@@ -21,19 +21,51 @@
       :key="prop"
       class="flex flex-col m-1 mx-2"
     >
-      <label :for="prop + wave.id" class="grow text-start">{{ namesOfPropsOfWave[prop] }}</label>
-      <input
-        :id="prop + wave.id"
+      <label :for="prop + wave.id" class="grow text-start">
+        {{ propsOfWave[prop].name }} 
+        <span 
+          v-if="propsOfWave[prop].unit"
+          class="text-gray-400"
+        >
+          {{ propsOfWave[prop].unit }}
+        </span>
+      </label>
+      <v-slider
+        v-if="propsOfWave[prop].min !== undefined && propsOfWave[prop].max !== undefined"
+        v-model="wave[prop]"
+        class="align-center mr-0"
+        :max="propsOfWave[prop].max"
+        :min="propsOfWave[prop].min"
+        :step="propsOfWave[prop].step"
+        hide-details
+      >
+        <template v-slot:append>
+          <v-text-field
+            :value="wave[prop]"
+            @input="wave[prop] = Number(($event?.target as HTMLInputElement)?.value || 0)"
+            hide-details
+            single-line
+            density="compact"
+            type="number"
+            style="width: 6rem;"
+          ></v-text-field>
+        </template>
+      </v-slider>
+      <v-text-field
+        v-else
         :value="wave[prop]"
         @input="wave[prop] = Number(($event?.target as HTMLInputElement)?.value || 0)"
+        hide-details
+        single-line
+        density="compact"
         type="number"
-        class="px-2"
-      >
+
+      ></v-text-field>
     </div>
     <div :class="freqMod && amplitudeMod ? 'flex flex-row' : ''">
       <div>
         <div class="flex justify-between m-1 mx-2 gap-x-2">
-          <label :for="'amp-mod' + wave.id" class="grow text-start">{{ namesOfPropsOfWave['amplitudeMod'] }}</label>
+          <label :for="'amp-mod' + wave.id" class="grow text-start">{{ propsOfWave['amplitudeMod'].name }}</label>
           <input
             :id="'amp-mod' + wave.id"
             type="checkbox"
@@ -45,7 +77,7 @@
       </div>
       <div>
         <div class="flex justify-between m-1 mx-2 gap-x-2">
-          <label :for="'freq-mod' + wave.id" class="grow text-start">{{ namesOfPropsOfWave['freqMod'] }}</label>
+          <label :for="'freq-mod' + wave.id" class="grow text-start">{{ propsOfWave['freqMod'].name }}</label>
           <input
             :id="'freq-mod' + wave.id"
             type="checkbox"
@@ -106,15 +138,56 @@ watch(freqModIsOn, (newVal) => {
   }
 })
 
-const namesOfPropsOfWave : {[key : string]: string} = {
-  type: 'Wave Shape',
-  amplitude: 'Amplitude',
-  freq: 'Frequency',
-  ph0: 'Start Phase',
-  fullness: 'Fullness',
-  center: 'Center',
-  amplitudeMod: 'Amplitude Modulation',
-  freqMod: 'Frequency Modulation',
+const propsOfWave : {[key : string]: {
+  name: string
+  type: 'number' | 'boolean' | 'select'
+  options?: string[]
+  min?: number
+  max?: number
+  step?: number
+  unit?: string
+}} = {
+  type: {
+    name: 'Wave Shape',
+    type: 'select',
+    options: Object.values(WaveType),
+  },
+  amplitude: {
+    name: 'Amplitude',
+    type: 'number',
+  },
+  freq: {
+    name: 'Frequency',
+    type: 'number',
+    unit: 'Hz',
+  },
+  ph0: {
+    name: 'Start Phase',
+    type: 'number',
+    min: -1,
+    max: 1,
+    step: 0.5,
+    unit: 'π * rad',
+  },
+  fullness: {
+    name: 'Fullness',
+    type: 'number',
+    min: 0,
+    max: 1,
+    step: 0.05,
+  },
+  center: {
+    name: 'Center',
+    type: 'number',
+  },
+  amplitudeMod: {
+    name: 'Amplitude Modulation',
+    type: 'boolean',
+  },
+  freqMod: {
+    name: 'Frequency Modulation',
+    type: 'boolean',
+  },
 }
 
 const namesOfTypesOfWave : {[key : string]: string} = {
