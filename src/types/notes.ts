@@ -1,19 +1,17 @@
 const SAMPLE_RATE = 44100
 
 export class Note {
-  private _id: string;
-  private _startTime: number;
-  private _duration: number;
-  private _endTime: number;
+  id: string;
+  startTime: number;
+  duration: number;
   wave: Wave;
 
   [key: string]: any;
 
   constructor(startTime: number = 0, duration: number = 1, wave = new Wave()) {
-    this._id = Math.random().toString(36).slice(2);
-    this._startTime = startTime;
-    this._duration = duration;
-    this._endTime = startTime + duration;
+    this.id = Math.random().toString(36).slice(2);
+    this.startTime = startTime;
+    this.duration = duration;
     this.wave = wave;
   }
 
@@ -25,34 +23,8 @@ export class Note {
     return new Note(this.startTime, this.duration, this.wave.copy())
   }
 
-  get id(): string {
-    return this._id;
-  }
-
-  set id(value: string) {
-    this._id = value;
-  }
-
-  get startTime(): number {
-    return this._startTime;
-  }
-
-  set startTime(value: number) {
-    this._startTime = value;
-    this._endTime = this._startTime + this._duration;
-  }
-
-  get duration(): number {
-    return this._duration;
-  }
-
-  set duration(value: number) {
-    this._duration = value;
-    this._endTime = this._startTime + this._duration;
-  }
-
   get endTime(): number {
-    return this._endTime;
+    return this.startTime + this.duration;
   }
 }
 
