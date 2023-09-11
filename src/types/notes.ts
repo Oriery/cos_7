@@ -98,7 +98,7 @@ export class Wave {
   }
 
   copy(this: Wave) : Wave {
-    return new Wave(this.type, this.amplitude, this.freq, this.ph0, this.center, this.fullness, this.amplitudeMod?.copy())
+    return new Wave(this.type, this.amplitude, this.freq, this.ph0, this.center, this.fullness, this.amplitudeMod?.copy(), this.freqMod?.copy())
   }
 }
 
