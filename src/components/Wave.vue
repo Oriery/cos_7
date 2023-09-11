@@ -2,7 +2,7 @@
   <div>
     <div class="flex flex-col m-1 min-w-[15rem]">
       <p class="text-start mx-1">{{ propsOfWave['type'].name }}</p>
-      <v-btn-toggle v-model="wave.type">
+      <v-btn-toggle v-model="wave.type" mandatory>
         <v-btn value='sine'>
           <v-icon>mdi-sine-wave</v-icon>
         </v-btn>
@@ -31,7 +31,7 @@
           v-if="propsOfWave[prop].unit"
           class="text-gray-400"
         >
-          {{ propsOfWave[prop].unit }}
+          ({{ propsOfWave[prop].unit }})
         </span>
       </label>
       <v-slider
@@ -77,7 +77,7 @@
         ></v-switch>
         <WaveComponent v-if="amplitudeModIsOn" :wave="amplitudeMod!" class="border-2 rounded-lg m-1"/>
       </div>
-      <div>
+      <div v-if="wave.type !== WaveType.WHITE_NOISE">
         <v-switch
           v-model="freqModIsOn"
           hide-details
@@ -194,14 +194,6 @@ const propsOfWave : {[key : string]: {
     name: 'Frequency Modulation',
     type: 'boolean',
   },
-}
-
-const namesOfTypesOfWave : {[key : string]: string} = {
-  [WaveType.SINE]: 'Sine',
-  [WaveType.SQUARE]: 'Square',
-  [WaveType.TRIANGLE]: 'Triangle',
-  [WaveType.SAWTOOTH]: 'Sawtooth',
-  [WaveType.WHITE_NOISE]: 'White Noise',
 }
 
 </script>
