@@ -10,14 +10,24 @@
           :key="prop"
           class="flex flex-col m-1 mx-2"
         >
-          <label :for="prop + note.id" class="grow text-start">{{ namesOfPropsOfNote[prop] }}</label>
-          <input
-            :id="prop + note.id"
+          <label :for="prop + note.id" class="grow text-start">
+            {{ propsOfNote[prop].name }}
+              <span 
+            v-if="propsOfNote[prop].unit"
+            class="text-gray-400"
+          >
+            ({{ propsOfNote[prop].unit }})
+          </span>
+          </label>
+          <v-text-field
             :value="note[prop]"
             @input="note[prop] = Number(($event?.target as HTMLInputElement)?.value || 0)"
+            hide-details
+            single-line
+            density="compact"
             type="number"
-            class="px-2"
-          >
+            :prepend-icon="propsOfNote[prop].icon"
+          ></v-text-field>
         </div>
       </div>
       <div>
@@ -55,9 +65,21 @@ defineProps<{
 
 defineEmits(['delete-note', 'duplicate-note'])
 
-const namesOfPropsOfNote : {[key : string]: string} = {
-  'startTime': 'Start Time',
-  'duration': 'Duration',
+const propsOfNote : {[key : string]: {
+  name: string,
+  icon?: string,
+  unit?: string,
+}} = {
+  startTime: {
+    name: 'Start Time',
+    icon: 'mdi-ray-start',
+    unit: 's',
+  },
+  duration: {
+    name: 'Duration',
+    icon: 'mdi-timer',
+    unit: 's',
+  },
 }
 
 </script>
