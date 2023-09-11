@@ -38,6 +38,7 @@
         :min="propsOfWave[prop].min"
         :step="propsOfWave[prop].step"
         hide-details
+        :prepend-icon="propsOfWave[prop].icon"
       >
         <template v-slot:append>
           <v-text-field
@@ -59,7 +60,7 @@
         single-line
         density="compact"
         type="number"
-
+        :prepend-icon="propsOfWave[prop].icon"
       ></v-text-field>
     </div>
     <div :class="freqMod && amplitudeMod ? 'flex flex-row' : ''">
@@ -146,6 +147,7 @@ const propsOfWave : {[key : string]: {
   max?: number
   step?: number
   unit?: string
+  icon?: string
 }} = {
   type: {
     name: 'Wave Shape',
@@ -155,11 +157,13 @@ const propsOfWave : {[key : string]: {
   amplitude: {
     name: 'Amplitude',
     type: 'number',
+    icon: 'mdi-volume-high'
   },
   freq: {
     name: 'Frequency',
     type: 'number',
     unit: 'Hz',
+    icon: 'mdi-sine-wave',
   },
   ph0: {
     name: 'Start Phase',
@@ -168,6 +172,7 @@ const propsOfWave : {[key : string]: {
     max: 1,
     step: 0.5,
     unit: 'π * rad',
+    icon: 'mdi-radius-outline'
   },
   fullness: {
     name: 'Fullness',
@@ -175,10 +180,12 @@ const propsOfWave : {[key : string]: {
     min: 0,
     max: 1,
     step: 0.05,
+    icon: 'mdi-square-wave',
   },
   center: {
     name: 'Center',
     type: 'number',
+    icon: 'mdi-waves-arrow-up'
   },
   amplitudeMod: {
     name: 'Amplitude Modulation',
