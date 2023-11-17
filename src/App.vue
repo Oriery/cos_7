@@ -138,7 +138,9 @@ function createNote() {
 }
 
 function play(noteSequence : NoteSequence) {
+  console.time('generate')
   const playedSound = playSequence(noteSequence)
+  console.timeEnd('generate')
 
   // if the same values, then we don't need to update the data
   if (visualizedData.ref.value.length === playedSound.audioData.length) {
