@@ -62,7 +62,7 @@
           ></v-text-field>
         </div>
       </div>
-      <Plot :data="visualizedData" :key="Math.random()"/>
+      <Plot :data="visualizedData"/>
     </div>
   </div>
 </template>
@@ -73,7 +73,7 @@ import { ref } from 'vue'
 import NoteComponent from './components/Note.vue'
 import { Note, Wave, WaveType, playSequence, NoteSequence, sampleRate, bitsPerSample } from './types/notes'
 import Plot from './components/Plot.vue';
-const visualizedData = ref<Float64Array>(new Float64Array(0))
+const visualizedData = {ref: ref<Float64Array>(new Float64Array(0)) }
 
 const noteSequence = ref<NoteSequence>([])
 
@@ -140,7 +140,21 @@ function createNote() {
 function play(noteSequence : NoteSequence) {
   const playedSound = playSequence(noteSequence)
 
-  visualizedData.value = playedSound.audioData
+  // if the same values, then we don't need to update the data
+  if (visualizedData.ref.value.length === playedSound.audioData.length) {
+    let same = true
+    for (let i = 0; i < visualizedData.ref.value.length; i++) {
+      if (visualizedData.ref.value[i] !== playedSound.audioData[i]) {
+        same = false
+        break
+      }
+    }
+    if (same) {
+      return
+    }
+  }
+
+  visualizedData.ref.value = playedSound.audioData
 }
 
 </script>
