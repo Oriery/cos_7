@@ -62,7 +62,9 @@
           ></v-text-field>
         </div>
       </div>
-      <Plot :data="visualizedData"/>
+      <Plot :data="visualizedData.originalSound"/>
+      <Plot :data="visualizedData.fourierAmplitude"/>
+      <Plot :data="visualizedData.fourierPhase"/>
     </div>
   </div>
 </template>
@@ -73,7 +75,13 @@ import { ref } from 'vue'
 import NoteComponent from './components/Note.vue'
 import { Note, Wave, WaveType, playSequence, NoteSequence, sampleRate, bitsPerSample } from './types/notes'
 import Plot from './components/Plot.vue';
-const visualizedData = {ref: ref<Float64Array>(new Float64Array(0)) }
+import { fourierTransform } from './types/fourier';
+
+const visualizedData = {
+  originalSound: {ref: ref(new Float64Array(0)) },
+  fourierAmplitude: {ref: ref(new Float64Array(0)) },
+  fourierPhase: {ref: ref(new Float64Array(0)) },
+}
 
 const noteSequence = ref<NoteSequence>([])
 
@@ -81,7 +89,7 @@ resetNoteSequence()
 
 function resetNoteSequence() {
   noteSequence.value = []
-  noteSequence.value.push(new Note(0, 2, new Wave(
+  noteSequence.value.push(new Note(0, 1, new Wave(
     WaveType.SINE,
     1,
     220,
@@ -104,7 +112,7 @@ function resetNoteSequence() {
       )
     )
   )))
-  noteSequence.value.push(new Note(1, 2, new Wave(
+  noteSequence.value.push(new Note(0.5, 0.5, new Wave(
     WaveType.SQUARE,
     0.1,
     110,
@@ -138,15 +146,13 @@ function createNote() {
 }
 
 function play(noteSequence : NoteSequence) {
-  console.time('generate')
   const playedSound = playSequence(noteSequence)
-  console.timeEnd('generate')
 
   // if the same values, then we don't need to update the data
-  if (visualizedData.ref.value.length === playedSound.audioData.length) {
+  if (visualizedData.originalSound.ref.value.length === playedSound.audioData.length) {
     let same = true
-    for (let i = 0; i < visualizedData.ref.value.length; i++) {
-      if (visualizedData.ref.value[i] !== playedSound.audioData[i]) {
+    for (let i = 0; i < visualizedData.originalSound.ref.value.length; i++) {
+      if (visualizedData.originalSound.ref.value[i] !== playedSound.audioData[i]) {
         same = false
         break
       }
@@ -156,7 +162,14 @@ function play(noteSequence : NoteSequence) {
     }
   }
 
-  visualizedData.ref.value = playedSound.audioData
+  visualizedData.originalSound.ref.value = playedSound.audioData
+
+  console.time('fourier')
+  const fourierResult = fourierTransform(playedSound.audioData)
+  console.timeEnd('fourier')
+
+  visualizedData.fourierAmplitude.ref.value = fourierResult.amplitude
+  visualizedData.fourierPhase.ref.value = fourierResult.phase
 }
 
 </script>
