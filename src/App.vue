@@ -1,7 +1,7 @@
 <template>
   <div>
     <h2 class="text-xl">Sound Maker</h2>
-    <div>
+    <div class="flex flex-col gap-2">
       <h2 class="text-lg">Notes:</h2>
       <div class="flex flex-wrap justify-center">
         <NoteComponent 
@@ -12,52 +12,57 @@
           @duplicate-note="duplicateNote"
         />
       </div>
-      <button 
-        @click="createNote"
-        class="bg-gray-500 m-2 p-2"
-      >
-        Create Note
-      </button>
-      <button 
-        @click="() => noteSequence = []"
-        class="bg-red-500 m-2 p-2"
-      >
-        Clear
-      </button>
-      <button 
-        @click="() => playSequence(noteSequence as NoteSequence)"
-        class="bg-green-500 m-2 p-2"
-      >
-        Play Sequence
-      </button>
-      <button 
-        @click="resetNoteSequence"
-        class="bg-blue-500 m-2 p-2"
-      >
-        Reset To Default
-      </button>
-      <div class="flex flex-row align-center">
-        Sample rate
-        <v-text-field
-          v-model="sampleRate"
-          hide-details
-          single-line
-          density="compact"
-          type="number"
-          :prepend-icon="'mdi:signal'"
-        ></v-text-field>
+      <div class="flex flex-row gap-2">
+        <button 
+          @click="createNote"
+          class="bg-gray-500 p-2"
+        >
+          Create Note
+        </button>
+        <button 
+          @click="() => noteSequence = []"
+          class="bg-red-500 p-2"
+        >
+          Clear
+        </button>
+        <button 
+          @click="() => play(noteSequence as NoteSequence)"
+          class="bg-green-500 p-2"
+        >
+          Play Sequence
+        </button>
+        <button 
+          @click="resetNoteSequence"
+          class="bg-blue-500 p-2"
+        >
+          Reset To Default
+        </button>
       </div>
-      <div class="flex flex-row align-center">
-        Bits per sample
-        <v-text-field
-          v-model="bitsPerSample"
-          hide-details
-          single-line
-          density="compact"
-          type="number"
-          :prepend-icon="'mdi:signal'"
-        ></v-text-field>
+      <div class="flex flex-row gap-8">
+        <div class="flex flex-row align-center gap-2">
+          Sample rate:
+          <v-text-field
+            v-model="sampleRate"
+            hide-details
+            single-line
+            density="compact"
+            type="number"
+            class="w-[12rem]"
+          ></v-text-field>
+        </div>
+        <div class="flex flex-row align-center gap-2">
+          Bits per sample:
+          <v-text-field
+            v-model="bitsPerSample"
+            hide-details
+            single-line
+            density="compact"
+            type="number"
+            class="w-[12rem]"
+          ></v-text-field>
+        </div>
       </div>
+      <Plot :data="visualizedData" :key="Math.random()"/>
     </div>
   </div>
 </template>
@@ -67,6 +72,8 @@
 import { ref } from 'vue'
 import NoteComponent from './components/Note.vue'
 import { Note, Wave, WaveType, playSequence, NoteSequence, sampleRate, bitsPerSample } from './types/notes'
+import Plot from './components/Plot.vue';
+const visualizedData = ref<Float64Array>(new Float64Array(0))
 
 const noteSequence = ref<NoteSequence>([])
 
@@ -128,6 +135,12 @@ function duplicateNote(note: Note) {
 function createNote() {
   console.log('create note')
   noteSequence.value.push(new Note())
+}
+
+function play(noteSequence : NoteSequence) {
+  const playedSound = playSequence(noteSequence)
+
+  visualizedData.value = playedSound.audioData
 }
 
 </script>

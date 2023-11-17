@@ -5,6 +5,11 @@ const DEFAULT_BITS_PER_SAMPLE = 64
 export const sampleRate = ref(DEFAULT_SAMPLE_RATE)
 export const bitsPerSample = ref(DEFAULT_BITS_PER_SAMPLE)
 
+type Sound = {
+  sampleRate: number,
+  audioData: Float64Array
+}
+
 export class Note {
   id: string;
   startTime: number;
@@ -130,12 +135,11 @@ export function playNote(note: Note) {
 
 export type NoteSequence = Note[]
 
-export function playSequence(noteSequence : NoteSequence) {
-  if (!noteSequence.length) {
-    console.warn('No notes to play')
-    return
-  }
+export function playSequence(noteSequence : NoteSequence) : Sound {
+  return playBuffer(noteSequenceToBytes(noteSequence))
+}
 
+export function noteSequenceToBytes(noteSequence: NoteSequence) : Float64Array {
   const audioBuffer = noteSequence.reduce((acc, note) => {
     const noteBuffer = (note as Note).toBytes(sampleRate.value)
     const offset = note.startTime * sampleRate.value
@@ -146,30 +150,40 @@ export function playSequence(noteSequence : NoteSequence) {
     return acc
   }, new Float64Array(Math.max(...noteSequence.map(note => note.endTime)) * sampleRate.value))
 
-  playBuffer(audioBuffer)
+  return audioBuffer
 }
 
-export function playBuffer(buffer: Float64Array) {
-  let sampleRateUsed = sampleRate.value
-  let bufferUsed = buffer
-  if (sampleRate.value < 8000) {
-    let { newBuffer, newSampleRate } = convertIntoAtLeast8000SamplesPerSecond(buffer, sampleRate.value)
-    sampleRateUsed = newSampleRate
-    bufferUsed = newBuffer
-  }
-
-  if (bitsPerSample.value < Float64Array.BYTES_PER_ELEMENT * 8) {
-    bufferUsed =  convertToBitDepth(bufferUsed, bitsPerSample.value)
-  }
+export function playBuffer(buffer: Float64Array) : Sound {
+  const sound = convertIntoSamplerateAndBitdepth(buffer, sampleRate.value, bitsPerSample.value)
 
   const audioCtx = new window.AudioContext()
   const source = audioCtx.createBufferSource()
-  const audioData = audioCtx.createBuffer(1, bufferUsed.length, sampleRateUsed)
-  audioData.copyToChannel(new Float32Array(bufferUsed), 0)
+  const audioData = audioCtx.createBuffer(1, sound.audioData.length, sound.sampleRate)
+  audioData.copyToChannel(new Float32Array(sound.audioData), 0)
 
   source.buffer = audioData
   source.connect(audioCtx.destination)
   source.start()
+
+  return sound
+}
+
+function convertIntoSamplerateAndBitdepth(buffer: Float64Array, sampleRate: number, bitsPerSample: number) : Sound {
+  let sampleRateUsed = sampleRate
+  let bufferUsed = buffer
+  if (sampleRate < 8000) {
+    let { newBuffer, newSampleRate } = convertIntoAtLeast8000SamplesPerSecond(buffer, sampleRate)
+    sampleRateUsed = newSampleRate
+    bufferUsed = newBuffer
+  }
+
+  if (bitsPerSample < Float64Array.BYTES_PER_ELEMENT * 8) {
+    bufferUsed =  convertToBitDepth(bufferUsed, bitsPerSample)
+  }
+  return {
+    sampleRate: sampleRateUsed,
+    audioData: bufferUsed
+  }
 }
 
 // because audioCtx.createBuffer can only create buffers with sample rate of more than 8000
