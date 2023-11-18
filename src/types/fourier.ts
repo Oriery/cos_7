@@ -89,8 +89,8 @@ export function bandpassFilter(
   const outputRealParts = new Float64Array(N);
   const outputImagParts = new Float64Array(N);
 
-  const minFreqIndex = Math.round((minFreq * N) / sampleRate);
-  const maxFreqIndex = Math.round((maxFreq * N) / sampleRate);
+  const minFreqIndex = Math.round((minFreq * N * 2) / sampleRate);
+  const maxFreqIndex = Math.round((maxFreq * N * 2) / sampleRate);
 
   if (allow) {
     for (let i = 0; i < N; i++) {
