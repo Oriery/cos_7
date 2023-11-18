@@ -10,10 +10,10 @@ export type FourierResult = {
 export function fourierTransform(inputArray: Float64Array): FourierResult {
   const N = inputArray.length;
   const halfN = Math.floor(N / 2);
-  const amplitude = new Float64Array(N);
-  const phase = new Float64Array(N);
-  const realParts = new Float64Array(N);
-  const imagParts = new Float64Array(N);
+  const amplitude = new Float64Array(halfN);
+  const phase = new Float64Array(halfN);
+  const realParts = new Float64Array(halfN);
+  const imagParts = new Float64Array(halfN);
 
   // Precompute cosine and sine values
   const cosValues = new Float64Array(N);
@@ -49,8 +49,8 @@ export function inverseFourierTransform(
   realParts: Float64Array,
   imagParts: Float64Array
 ): Float64Array {
-  const N = realParts.length;
-  const halfN = Math.floor(N / 2);
+  const halfN = realParts.length;
+  const N = halfN * 2;
   const outputArray = new Float64Array(N);
 
   // Precompute cosine and sine values
