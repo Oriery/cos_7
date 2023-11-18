@@ -66,6 +66,8 @@
         <Plot :data="visualizedData.originalSound" title="Sound"/>
         <Plot :data="visualizedData.fourierAmplitude" title="Amplitude spectre" logorithmicScaleAllowed/>
         <Plot :data="visualizedData.fourierPhase" title="Phase spectre"/>
+        <Plot :data="visualizedData.inversedSound" title="Inversed from Fourier"/>
+        <v-btn @click="playBuffer(visualizedData.inversedSound.ref.value)" color="green">Play inversed</v-btn>
       </div>
     </div>
   </div>
@@ -75,14 +77,22 @@
 
 import { ref } from 'vue'
 import NoteComponent from './components/Note.vue'
-import { Note, Wave, WaveType, playSequence, NoteSequence, sampleRate, bitsPerSample } from './types/notes'
+import { Note, Wave, WaveType, playSequence, NoteSequence, sampleRate, bitsPerSample, playBuffer } from './types/notes'
 import Plot from './components/Plot.vue';
-import { fourierTransform } from './types/fourier';
+import { fourierTransform, inverseFourierTransform } from './types/fourier';
+import type { FourierResult } from './types/fourier';
 
 const visualizedData = {
   originalSound: {ref: ref(new Float64Array(0)) },
   fourierAmplitude: {ref: ref(new Float64Array(0)) },
   fourierPhase: {ref: ref(new Float64Array(0)) },
+  inversedSound: {ref: ref(new Float64Array(0)) },
+}
+let fourierResult : FourierResult = {
+  amplitude: new Float64Array(0),
+  phase: new Float64Array(0),
+  imagParts: new Float64Array(0),
+  realParts: new Float64Array(0),
 }
 
 const noteSequence = ref<NoteSequence>([])
@@ -165,7 +175,7 @@ function play(noteSequence : NoteSequence) {
 
   if (!same) {
     console.time('fourier')
-    const fourierResult = fourierTransform(playedSound.audioData)
+    fourierResult = fourierTransform(playedSound.audioData)
     console.timeEnd('fourier')
 
     visualizedData.fourierAmplitude.ref.value = fourierResult.amplitude
@@ -173,6 +183,11 @@ function play(noteSequence : NoteSequence) {
   }
 
   visualizedData.originalSound.ref.value = playedSound.audioData
+
+  console.time('inverseFourier')
+  const inversed = inverseFourierTransform(fourierResult.realParts, fourierResult.imagParts)
+  console.timeEnd('inverseFourier')
+  visualizedData.inversedSound.ref.value = inversed
 }
 
 </script>
