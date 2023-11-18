@@ -2,8 +2,8 @@
   <div>
     <h2 class="text-xl">Sound Maker</h2>
     <div class="flex flex-col gap-2">
-      <h2 class="text-lg">Notes:</h2>
-      <div class="flex flex-wrap justify-center">
+      <h2 class="text-lg text-start">Notes:</h2>
+      <div class="flex flex-wrap">
         <NoteComponent 
           v-for="note in noteSequence"
           :key="note.id"
