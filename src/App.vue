@@ -62,9 +62,11 @@
           ></v-text-field>
         </div>
       </div>
-      <Plot :data="visualizedData.originalSound" title="Sound"/>
-      <Plot :data="visualizedData.fourierAmplitude" title="Amplitude spectre" logorithmicScaleAllowed/>
-      <Plot :data="visualizedData.fourierPhase" title="Phase spectre"/>
+      <div class="flex flex-col gap-2">
+        <Plot :data="visualizedData.originalSound" title="Sound"/>
+        <Plot :data="visualizedData.fourierAmplitude" title="Amplitude spectre" logorithmicScaleAllowed/>
+        <Plot :data="visualizedData.fourierPhase" title="Phase spectre"/>
+      </div>
     </div>
   </div>
 </template>
@@ -89,7 +91,7 @@ resetNoteSequence()
 
 function resetNoteSequence() {
   noteSequence.value = []
-  noteSequence.value.push(new Note(0, 0.5, new Wave(
+  noteSequence.value.push(new Note(0, 1, new Wave(
     WaveType.SINE,
     1,
     220,
@@ -112,7 +114,7 @@ function resetNoteSequence() {
       )
     )
   )))
-  noteSequence.value.push(new Note(0.25, 0.25, new Wave(
+  noteSequence.value.push(new Note(0.5, 0.5, new Wave(
     WaveType.SQUARE,
     0.1,
     110,

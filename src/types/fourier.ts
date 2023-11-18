@@ -29,7 +29,12 @@ export function fourierTransform(inputArray: Float64Array): {
       real += inputArray[n] * cosValues[(k * n) % N];
       imag += inputArray[n] * sinValues[(k * n) % N];
     }
-    amplitude[k] = math.sqrt(real * real + imag * imag) as number;
+
+    // Normalize
+    real /= N;
+    imag /= N;
+
+    amplitude[k] = Math.sqrt(real * real + imag * imag);
     phase[k] = math.atan2(imag, real);
     realParts[k] = real;
     imagParts[k] = imag;
