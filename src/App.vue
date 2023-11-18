@@ -67,7 +67,12 @@
         <Plot :data="visualizedData.fourierAmplitude" title="Amplitude spectre" logorithmicScaleAllowed/>
         <Plot :data="visualizedData.fourierPhase" title="Phase spectre"/>
         <div class="flex flex-col gap-2">
-          <div class="flex flex-row gap-2 align-center">
+          <v-switch
+            label="Filters"
+            v-model="filtersOn"
+            class="-mb-10"
+          ></v-switch>
+          <div v-if="filtersOn" class="flex flex-row gap-2 align-center">
             Filter min:
             <v-text-field
               v-model="filterMin"
@@ -78,7 +83,7 @@
               class="w-[12rem]"
             ></v-text-field>
           </div>
-          <div class="flex flex-row gap-2 align-center">
+          <div v-if="filtersOn" class="flex flex-row gap-2 align-center">
             Filter max:
             <v-text-field
               v-model="filterMax"
@@ -105,6 +110,7 @@ import { Note, Wave, WaveType, playSequence, NoteSequence, sampleRate, bitsPerSa
 import Plot from './components/Plot.vue';
 import { fourierTransform, inverseFourierTransform, bandpassFilter } from './types/fourier';
 import type { FourierResult } from './types/fourier';
+import { el } from 'vuetify/locale';
 
 const visualizedData = {
   originalSound: {ref: ref(new Float64Array(0)) },
@@ -121,6 +127,7 @@ let fourierResult : FourierResult = {
 
 const filterMin = ref(200)
 const filterMax = ref(300)
+const filtersOn = ref(false)
 
 const noteSequence = ref<NoteSequence>([])
 
@@ -213,12 +220,17 @@ function play(noteSequence : NoteSequence) {
 }
 
 function doInverseWithFilterAndPlay() {
-  console.time('bandpassFilter')
-  const filteredFourier = bandpassFilter(fourierResult, sampleRate.value, filterMin.value, filterMax.value)
-  console.timeEnd('bandpassFilter')
+  let fourier
+  if (filtersOn.value) {
+    console.time('bandpassFilter')
+    fourier = bandpassFilter(fourierResult, sampleRate.value, filterMin.value, filterMax.value)
+    console.timeEnd('bandpassFilter')
+  } else {
+    fourier = fourierResult
+  }
 
   console.time('inverseFourier')
-  const inversed = inverseFourierTransform(filteredFourier.realParts, filteredFourier.imagParts)
+  const inversed = inverseFourierTransform(fourier.realParts, fourier.imagParts)
   console.timeEnd('inverseFourier')
   visualizedData.inversedSound.ref.value = inversed
 
