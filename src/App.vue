@@ -66,8 +66,32 @@
         <Plot :data="visualizedData.originalSound" title="Sound"/>
         <Plot :data="visualizedData.fourierAmplitude" title="Amplitude spectre" logorithmicScaleAllowed/>
         <Plot :data="visualizedData.fourierPhase" title="Phase spectre"/>
-        <Plot :data="visualizedData.inversedSound" title="Inversed from Fourier"/>
-        <v-btn @click="playBuffer(visualizedData.inversedSound.ref.value)" color="green">Play inversed</v-btn>
+        <div class="flex flex-col gap-2">
+          <div class="flex flex-row gap-2 align-center">
+            Filter min:
+            <v-text-field
+              v-model="filterMin"
+              hide-details
+              single-line
+              density="compact"
+              type="number"
+              class="w-[12rem]"
+            ></v-text-field>
+          </div>
+          <div class="flex flex-row gap-2 align-center">
+            Filter max:
+            <v-text-field
+              v-model="filterMax"
+              hide-details
+              single-line
+              density="compact"
+              type="number"
+              class="w-[12rem]"
+            ></v-text-field>
+          </div>
+          <v-btn @click="doInverseWithFilterAndPlay" color="green">Do inverse with filter and play</v-btn>
+          <Plot :data="visualizedData.inversedSound" title="Inversed from Fourier + Filters"/>
+        </div>
       </div>
     </div>
   </div>
@@ -79,7 +103,7 @@ import { ref } from 'vue'
 import NoteComponent from './components/Note.vue'
 import { Note, Wave, WaveType, playSequence, NoteSequence, sampleRate, bitsPerSample, playBuffer } from './types/notes'
 import Plot from './components/Plot.vue';
-import { fourierTransform, inverseFourierTransform } from './types/fourier';
+import { fourierTransform, inverseFourierTransform, bandpassFilter } from './types/fourier';
 import type { FourierResult } from './types/fourier';
 
 const visualizedData = {
@@ -94,6 +118,9 @@ let fourierResult : FourierResult = {
   imagParts: new Float64Array(0),
   realParts: new Float64Array(0),
 }
+
+const filterMin = ref(200)
+const filterMax = ref(300)
 
 const noteSequence = ref<NoteSequence>([])
 
@@ -182,12 +209,20 @@ function play(noteSequence : NoteSequence) {
     visualizedData.fourierPhase.ref.value = fourierResult.phase
   }
 
-  visualizedData.originalSound.ref.value = playedSound.audioData
+  visualizedData.originalSound.ref.value = playedSound.audioData 
+}
+
+function doInverseWithFilterAndPlay() {
+  console.time('bandpassFilter')
+  const filteredFourier = bandpassFilter(fourierResult, sampleRate.value, filterMin.value, filterMax.value)
+  console.timeEnd('bandpassFilter')
 
   console.time('inverseFourier')
-  const inversed = inverseFourierTransform(fourierResult.realParts, fourierResult.imagParts)
+  const inversed = inverseFourierTransform(filteredFourier.realParts, filteredFourier.imagParts)
   console.timeEnd('inverseFourier')
   visualizedData.inversedSound.ref.value = inversed
+
+  playBuffer(visualizedData.inversedSound.ref.value)
 }
 
 </script>
