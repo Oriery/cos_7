@@ -84,28 +84,40 @@
             v-model="filtersOn"
             class="-mb-10"
           ></v-switch>
-          <div v-if="filtersOn" class="flex flex-row gap-2 align-center">
-            Filter min:
-            <v-text-field
-              v-model="filterMin"
-              hide-details
-              single-line
-              density="compact"
-              type="number"
-              class="w-[12rem]"
-            ></v-text-field>
-          </div>
-          <div v-if="filtersOn" class="flex flex-row gap-2 align-center">
-            Filter max:
-            <v-text-field
-              v-model="filterMax"
-              hide-details
-              single-line
-              density="compact"
-              type="number"
-              class="w-[12rem]"
-            ></v-text-field>
-          </div>
+          <v-range-slider
+            v-if="filtersOn"
+            v-model="filterLogRange"
+            :min="0"
+            :max="Math.log2(maxFrequency)"
+            :step="0.01"
+            hide-details
+            class="align-center"
+          >
+            <template v-slot:prepend>
+              <v-text-field
+                :model-value="filterRange[0].toPrecision(5)"
+                hide-details
+                single-line
+                type="number"
+                variant="outlined"
+                density="compact"
+                class="w-[8rem]"
+                @change="filterLogRange = [Math.log2(Number($event.target.value)), filterLogRange[1]]"
+              ></v-text-field>
+            </template>
+            <template v-slot:append>
+              <v-text-field
+                :model-value="filterRange[1].toPrecision(5)"
+                hide-details
+                single-line
+                type="number"
+                variant="outlined"
+                density="compact"
+                class="w-[8rem]"
+                @change="filterLogRange = [filterLogRange[0], Math.log2(Number($event.target.value))]"
+              ></v-text-field>
+            </template>
+          </v-range-slider>
           <v-btn @click="doInverseWithFilterAndPlay" color="green">Do inverse with filter and play</v-btn>
           <Plot :data="visualizedData.inversedSound" title="Inversed from Fourier + Filters"/>
         </div>
@@ -116,7 +128,7 @@
 
 <script lang="ts" setup>
 
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import NoteComponent from './components/Note.vue'
 import { Note, Wave, WaveType, playSequence, NoteSequence, sampleRate, bitsPerSample, playBuffer } from './types/notes'
 import Plot from './components/Plot.vue';
@@ -136,9 +148,11 @@ let fourierResult : FourierResult = {
   realParts: new Float64Array(0),
 }
 
-const filterMin = ref(200)
-const filterMax = ref(300)
+const maxFrequency = ref(22000)
+const filterLogRange = ref([Math.log2(200), Math.log2(300)])
+const filterRange = computed(() => [2 ** filterLogRange.value[0], 2 ** filterLogRange.value[1]])
 const filtersOn = ref(false)
+
 const showPhaseSpectre = ref(false)
 
 const useFft = ref(true)
@@ -246,7 +260,7 @@ function doInverseWithFilterAndPlay() {
   let fourier
   if (filtersOn.value) {
     console.time('bandpassFilter')
-    fourier = bandpassFilter(fourierResult, sampleRate.value, filterMin.value, filterMax.value)
+    fourier = bandpassFilter(fourierResult, sampleRate.value, filterRange.value[0], filterRange.value[1])
     console.timeEnd('bandpassFilter')
   } else {
     fourier = fourierResult
