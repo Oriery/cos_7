@@ -132,7 +132,7 @@ import { ref, computed } from 'vue'
 import NoteComponent from './components/Note.vue'
 import { Note, Wave, WaveType, playSequence, NoteSequence, sampleRate, bitsPerSample, playBuffer } from './types/notes'
 import Plot from './components/Plot.vue';
-import { fourierTransform, fastFourierTransform, inverseFourierTransform, bandpassFilter } from './types/fourier';
+import { fourierTransform, fastFourierTransform, inverseFourierTransform, bandpassFilter, inverseFastFourierTransform } from './types/fourier';
 import type { FourierResult } from './types/fourier';
 
 const visualizedData = {
@@ -266,9 +266,16 @@ function doInverseWithFilterAndPlay() {
     fourier = fourierResult
   }
 
-  console.time('inverseFourier')
-  let inversed = inverseFourierTransform(fourier.realParts, fourier.imagParts)
-  console.timeEnd('inverseFourier')
+  let inversed
+  if (useFft.value) {
+    console.time('inverseFastFourier')
+    inversed = inverseFastFourierTransform(fourier.realParts, fourier.imagParts)
+    console.timeEnd('inverseFastFourier')
+  } else {
+    console.time('inverseFourier')
+    inversed = inverseFourierTransform(fourier.realParts, fourier.imagParts)
+    console.timeEnd('inverseFourier')
+  }
 
   // cut to original length
   inversed = inversed.slice(0, visualizedData.originalSound.ref.value.length)

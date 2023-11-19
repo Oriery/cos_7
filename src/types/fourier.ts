@@ -128,15 +128,81 @@ export function inverseFourierTransform(
   for (let n = 0; n < N; n++) {
     let real = 0;
     let imag = 0;
+    let cosIndex = 0;
+    let sinIndex = 0;
+
     for (let k = 0; k < halfN; k++) {
-      real += realParts[k] * cosValues[(k * n) % N];
-      imag += imagParts[k] * sinValues[(k * n) % N];
+      real += realParts[k] * cosValues[cosIndex];
+      imag += imagParts[k] * sinValues[sinIndex];
+      
+      cosIndex += n;
+      if (cosIndex >= N) cosIndex -= N;
+      sinIndex += n;
+      if (sinIndex >= N) sinIndex -= N;
     }
 
     outputArray[n] = 2 * (real + imag);
   }
 
-  return outputArray.reverse();
+  // Eliminated reverse operation
+  return outputArray;
+}
+
+export function inverseFastFourierTransform(
+  realParts: Float64Array,
+  imagParts: Float64Array
+) : Float64Array {
+  // Convert to complex numbers
+  let inputArray = realParts.reduce((acc, val, i) => {
+    acc[i] = math.complex(val, imagParts[i]);
+    return acc;
+  }, new Array(realParts.length * 2) as math.Complex[]);
+  // fill the rest with zeros
+  for (let i = realParts.length; i < inputArray.length; i++) {
+    inputArray[i] = math.complex(0, 0);
+  }
+
+  let N = inputArray.length;
+  if ((N & (N - 1)) !== 0) {
+    // Padding to the next power of 2 if needed
+    const nextPow2 = Math.pow(2, Math.ceil(Math.log2(N)));
+    inputArray = [...inputArray, ...Array(nextPow2 - N).fill(math.complex(0, 0))];
+    N = nextPow2;
+  }
+
+  // Inverse FFT function
+  function ifft(input: math.Complex[]) {
+    const n = input.length;
+
+    // Base case
+    if (n === 1) return [input[0]];
+
+    // Split the input into even and odd parts
+    const even = ifft(input.filter((_, i) => i % 2 === 0));
+    const odd = ifft(input.filter((_, i) => i % 2 !== 0));
+
+    // Combine
+    const combined = new Array(n) as math.Complex[];
+    for (let k = 0; k < n / 2; k++) {
+      const e = even[k];
+      const o = odd[k];
+      const oMult = math.multiply(o, math.exp(math.complex(0, 2 * Math.PI * k / n)));
+      combined[k] = math.add(e, oMult) as math.Complex;
+      combined[k + n / 2] = math.subtract(e, oMult) as math.Complex;
+    }
+
+    return combined;
+  }
+
+  // Normalize
+  const scale = 2;
+  inputArray = inputArray.map((val) => math.multiply(val, scale) as math.Complex);
+
+  // Perform IFFT
+  let ifftResult = ifft(inputArray);
+
+  // Extract the real parts for the output
+  return new Float64Array(ifftResult.map(val => val.re));
 }
 
 export function bandpassFilter(
