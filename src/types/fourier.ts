@@ -144,8 +144,7 @@ export function inverseFourierTransform(
     outputArray[n] = 2 * (real + imag);
   }
 
-  // Eliminated reverse operation
-  return outputArray;
+  return outputArray.reverse();
 }
 
 export function inverseFastFourierTransform(
