@@ -45,6 +45,69 @@ export function fourierTransform(inputArray: Float64Array): FourierResult {
   return { amplitude, phase, realParts, imagParts };
 }
 
+export function fastFourierTransform(inputArray: Float64Array): FourierResult {
+  let N = inputArray.length;
+  if ((N & (N - 1)) !== 0) {
+    const nextPow2 = Math.pow(2, Math.ceil(Math.log2(N)));
+    const paddedInput = new Float64Array(nextPow2);
+    paddedInput.set(inputArray);
+    inputArray = paddedInput;
+    N = nextPow2;
+  }
+
+  const halfN = Math.floor(N / 2);
+  const amplitude = new Float64Array(halfN);
+  const phase = new Float64Array(halfN);
+  const realParts = new Float64Array(halfN);
+  const imagParts = new Float64Array(halfN);
+
+  // Recursive FFT function
+  function fft(input: math.Complex[]) {
+    const n = input.length;
+
+    // Base case
+    if (n === 1) return [input[0]];
+
+    // Split the input into even and odd parts
+    const even = fft(input.filter((_, i) => i % 2 === 0));
+    const odd = fft(input.filter((_, i) => i % 2 !== 0));
+
+    // Combine
+    const combined = new Array(n);
+    for (let k = 0; k < n / 2; k++) {
+      const e = even[k]
+      const o = odd[k]
+      const oMult = math.multiply(o, math.exp(math.complex(0, -2 * Math.PI * k / n)));
+      combined[k] = math.add(e, oMult);
+      combined[k + n / 2] = math.subtract(e, oMult);
+    }
+
+    return combined;
+  }
+
+  // Perform FFT and extract real and imaginary parts
+  let fftResult = fft(inputArray.reduce((acc, val) => {
+    acc.push(math.complex(val, 0));
+    return acc;
+  }, [] as math.Complex[]));
+
+  // Normalize
+  const scale = 1 / N;
+  fftResult = fftResult.map((val) => math.multiply(val, scale));
+
+  for (let k = 0; k < halfN; k++) {
+    const real = fftResult[k].re;
+    const imag = fftResult[k].im;
+
+    amplitude[k] = Math.sqrt(real * real + imag * imag);
+    phase[k] = math.atan2(imag, real);
+    realParts[k] = real;
+    imagParts[k] = imag;
+  }
+
+  return { amplitude, phase, realParts, imagParts };
+}
+
 export function inverseFourierTransform(
   realParts: Float64Array,
   imagParts: Float64Array
