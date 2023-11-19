@@ -72,7 +72,12 @@
       <div class="flex flex-col gap-2">
         <Plot :data="visualizedData.originalSound" title="Sound"/>
         <Plot :data="visualizedData.fourierAmplitude" title="Amplitude spectre" logorithmicScaleAllowed/>
-        <Plot :data="visualizedData.fourierPhase" title="Phase spectre"/>
+        <v-switch
+          label="Show phase spectre"
+          v-model="showPhaseSpectre"
+          class="-mb-10"
+        ></v-switch>
+        <Plot v-if="showPhaseSpectre" :data="visualizedData.fourierPhase" title="Phase spectre"/>
         <div class="flex flex-col gap-2">
           <v-switch
             label="Filters"
@@ -134,6 +139,7 @@ let fourierResult : FourierResult = {
 const filterMin = ref(200)
 const filterMax = ref(300)
 const filtersOn = ref(false)
+const showPhaseSpectre = ref(false)
 
 const useFft = ref(true)
 let lastUseWasFft = false

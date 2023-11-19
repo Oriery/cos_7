@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 
-const DEFAULT_SAMPLE_RATE = 11060
+const DEFAULT_SAMPLE_RATE = 8192
 const DEFAULT_BITS_PER_SAMPLE = 64
 export const sampleRate = ref(DEFAULT_SAMPLE_RATE)
 export const bitsPerSample = ref(DEFAULT_BITS_PER_SAMPLE)
